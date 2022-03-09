@@ -259,11 +259,11 @@ function animate() {
         line.position.set(hitboxPlayer.position.x, controls.getObject().position.y, hitboxPlayer.position.z);
         line.setDirection(vectorForward)
 
-        // if (controls.getObject().position.y < Player.height) {
-        //     velocity.y = 0;
-        //     controls.getObject().position.y = Player.height;
-        //     canJump = true;
-        // }
+        if (controls.getObject().position.y < Player.height) {
+            velocity.y = 0;
+            controls.getObject().position.y = Player.height;
+            canJump = true;
+        }
     }
 
     renderer.render(scene, camera);
