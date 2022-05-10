@@ -10,7 +10,7 @@ export const initLight = (scene) => {
 
 export const initPlayer = (scene) => {
 	const cubeGeometry = new THREE.BoxGeometry(Player.width, Player.height, Player.depth, 4, 4, 4);
-	const wireMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+	const wireMaterial = new THREE.ShadowMaterial();
 	const hitbox = new THREE.Mesh(cubeGeometry, wireMaterial);
 
 	hitbox.position.set(0, Player.height / 2, 0);
@@ -36,4 +36,3 @@ export const initMouseLock = (controls) => {
         instructions.style.display = '';
     });
 }
-

@@ -5,6 +5,8 @@ import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockCont
 import * as dat from 'dat.gui'
 import { Player } from './Player/playerComponent';
 import { initLight, initPlayer, initMouseLock } from './initHelpers';
+import * as Ammo from './ammo.js';
+import { worldComponent } from './Player/worldComponent';
 
 // // Debug
 // const gui = new dat.GUI()
@@ -16,29 +18,15 @@ import { initLight, initPlayer, initMouseLock } from './initHelpers';
 const scene = new THREE.Scene();
 const velocity = new THREE.Vector3();
 const direction = new THREE.Vector3();
-const vertex = new THREE.Vector3();
-const color = new THREE.Color();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
-const controls = new PointerLockControls(camera, document.body);
+const controls = new PointerLockControls(worldComponent.camera, document.body);
 const clock = new THREE.Clock();
 const hitboxPlayer = initPlayer(scene);
-// const points = [
-//     new THREE.Vector3(0, 0, 0),
-//     new THREE.Vector3(-100, 100, 0)
-// ];
-// const geometry = new THREE.BufferGeometry().setFromPoints( points );
-// // CREATE THE LINE
-// const line = new THREE.Line(
-//         geometry,
-//         new THREE.LineBasicMaterial({
-//             color: 0x0000ff
-//         }));
 const dir = new THREE.Vector3(0, 0, -1);
 // нормализуем вектор направления (конвертируем в вектор единичной длины)
 dir.normalize();
 
 const origin = new THREE.Vector3(0, 0, 0);
-const length = 100;
+const length = 10;
 const hex = 0xffff00;
 const line = new THREE.ArrowHelper(dir, origin, length, hex);
 
@@ -56,13 +44,13 @@ const LOADING_MANAGER = new THREE.LoadingManager();
 const OBJ_LOADER = new OBJLoader(LOADING_MANAGER);
 
 // Модель
-OBJ_LOADER.load('./obj3.obj', (object) => {
+OBJ_LOADER.load('./model.obj', (object) => {
     objects.push(object);
     scene.add(object);
 });
 
 function init() {
-    camera.position.y = Player.height;
+    worldComponent.camera.position.y = Player.height;
     scene.background = new THREE.Color( 0xffffff );
     scene.fog = new THREE.Fog( 0xffffff, 0, 750 );
 
@@ -144,8 +132,8 @@ function init() {
 }
 
 function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
+    worldComponent.camera.aspect = window.innerWidth / window.innerHeight;
+    worldComponent.camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
@@ -167,7 +155,8 @@ function animate() {
         let canMoveLeft = true;
         let canMoveRight = true;
         // console.log( controls.getDirection(new THREE.Vector3(0, 1, 0)) );
-        camera.getWorldDirection(vectorForward);
+        worldComponent.camera.getWorldDirection(vectorForward);
+        vectorForward.setY(0);
 
         const vectorBackward = vectorForward.clone();
         vectorBackward.applyAxisAngle(axisY, angle);
@@ -210,19 +199,19 @@ function animate() {
         direction.normalize(); // this ensures consistent movements in all directions
 
         if (moveForward && canMoveForward) {
-            velocity.z -= 400.0 * delta;
+            velocity.z -= 700.0 * delta;
         }
 
         if (moveBackward && canMoveBackward) {
-            velocity.z += 400.0 * delta;
+            velocity.z += 700.0 * delta;
         }
 
         if (moveLeft && canMoveLeft) {
-            velocity.x += 400.0 * delta;  
+            velocity.x += 700.0 * delta;  
         }
 
         if (moveRight && canMoveRight) {
-            velocity.x -= 400.0 * delta;  
+            velocity.x -= 700.0 * delta;  
         }
 
         if (onObject) {
@@ -232,23 +221,22 @@ function animate() {
         
         controls.moveRight(-velocity.x * delta);
         controls.moveForward(-velocity.z * delta);
-        
-        if (intersectionRight.length > 0 && intersectionRight[0].distance <= 10) {
-            // hitboxPlayer.translateX(-1);
-            controls.getObject().translateX(-1.2);
-        }
-        if (intersectionLeft.length > 0 && intersectionLeft[0].distance <= 10) {
-            controls.getObject().translateX(1.2);
-            // hitboxPlayer.translateX(1);
-        }
+
         if (intersectionForward.length > 0 && intersectionForward[0].distance <= 10) {
-            console.log("forward");
-            controls.getObject().translateZ(1);
+            controls.getObject().translateZ(1.5);
         }
         if (intersectionBackward.length > 0 && intersectionBackward[0].distance <= 10) {
-            console.log("backward");
-            controls.getObject().translateZ(-1.2);
+            controls.getObject().translateZ(-1.5);
         }
+        if (intersectionRight.length > 0 && intersectionRight[0].distance <= 10) {
+            // hitboxPlayer.translateX(-1);
+            controls.getObject().translateX(-1.5);
+        }
+        if (intersectionLeft.length > 0 && intersectionLeft[0].distance <= 10) {
+            controls.getObject().translateX(1.5);
+            // hitboxPlayer.translateX(1);
+        }
+
 
         hitboxPlayer.position.y += (velocity.y * delta);
         controls.getObject().position.y = hitboxPlayer.position.y + Player.height / 2;
@@ -256,9 +244,10 @@ function animate() {
         hitboxPlayer.position.z = controls.getObject().position.z;
 
         // line.position.set(hitboxPlayer.position.x, hitboxPlayer.position.y + 10, hitboxPlayer.position.z + 50);
-        line.position.set(hitboxPlayer.position.x, controls.getObject().position.y, hitboxPlayer.position.z);
+        // line.position.set(hitboxPlayer.position.x, controls.getObject().position.y, hitboxPlayer.position.z);
+        line.position.set(hitboxPlayer.position.x, 0, hitboxPlayer.position.z);
         line.setDirection(vectorForward)
-
+ 
         if (controls.getObject().position.y < Player.height) {
             velocity.y = 0;
             controls.getObject().position.y = Player.height;
@@ -266,9 +255,14 @@ function animate() {
         }
     }
 
-    renderer.render(scene, camera);
+    renderer.render(scene, worldComponent.camera);
     requestAnimationFrame(animate);
 }
 
-init();
-animate();
+
+Ammo().then( (AmmoLib) => {
+    Ammo = AmmoLib;
+
+    init();
+    animate();
+});
